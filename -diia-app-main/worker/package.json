@@ -1,0 +1,19 @@
+{
+  "name": "diia-bot-worker",
+  "version": "1.0.0",
+  "private": true,
+  "scripts": {
+    "dev": "wrangler dev",
+    "deploy": "wrangler deploy",
+    "secret:token": "wrangler secret put BOT_TOKEN",
+    "secret:admin": "wrangler secret put ADMIN_ID",
+    "secret:hook": "wrangler secret put WEBHOOK_SECRET",
+    "kv:create:users": "wrangler kv:namespace create USERS_KV",
+    "kv:create:keys": "wrangler kv:namespace create KEYS_KV",
+    "kv:create:signs": "wrangler kv:namespace create SIGNS_KV"
+  },
+  "devDependencies": {
+    "wrangler": "^3.0.0"
+  }
+}
+

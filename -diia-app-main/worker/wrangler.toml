@@ -1,0 +1,24 @@
+name = "diia-bot-worker"
+main = "src/index.js"
+compatibility_date = "2024-01-01"
+
+[[kv_namespaces]]
+binding = "USERS_KV"
+id = "REPLACE_WITH_YOUR_KV_NAMESPACE_ID"
+
+[[kv_namespaces]]
+binding = "KEYS_KV"
+id = "REPLACE_WITH_YOUR_KEYS_KV_NAMESPACE_ID"
+
+[[kv_namespaces]]
+binding = "SIGNS_KV"
+id = "REPLACE_WITH_YOUR_SIGNS_KV_NAMESPACE_ID"
+
+[vars]
+NETLIFY_ORIGIN = "https://YOUR-SITE.netlify.app"
+
+# Secrets (set via: wrangler secret put BOT_TOKEN)
+# BOT_TOKEN
+# ADMIN_ID
+# WEBHOOK_SECRET
+

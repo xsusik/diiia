@@ -1,0 +1,131 @@
+<!DOCTYPE html>
+<html lang="uk">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width,initial-scale=1,maximum-scale=1,user-scalable=no">
+<title>Підпис — Дія</title>
+<style>
+  *{box-sizing:border-box;margin:0;padding:0}
+  body{
+    background: radial-gradient(70% 28% at 100% 100%,#e9f2d3 0%,transparent 100%),
+                radial-gradient(80% 26% at 0% 34%,#c6dff3 0%,transparent 100%),
+                linear-gradient(180deg,#abc8e2 0%,#bfd9ee 30%,#d2e5e9 55%,#d3e8dc 80%,#c7e1d6 100%);
+    font-family: -apple-system, BlinkMacSystemFont, 'SF Pro Text', sans-serif;
+    display:flex;flex-direction:column;align-items:center;
+    justify-content:center;min-height:100dvh;gap:20px;padding:24px;
+  }
+  .card{
+    background:rgba(255,255,255,.85);backdrop-filter:blur(20px);
+    border-radius:20px;padding:28px 24px;width:100%;max-width:400px;
+    display:flex;flex-direction:column;gap:16px;
+    box-shadow:0 8px 32px rgba(0,0,0,.12);
+  }
+  h2{font-size:1.25rem;color:#1a3f5c;text-align:center;font-weight:600}
+  #canvas{
+    background:#fff;border:2px solid #abc8e2;border-radius:14px;
+    cursor:crosshair;touch-action:none;display:block;width:100%;height:160px;
+  }
+  .row{display:flex;gap:12px}
+  button{
+    flex:1;padding:13px;border:none;border-radius:12px;
+    font-size:1rem;font-weight:600;cursor:pointer;transition:.15s;
+  }
+  #btnClear{background:#f0f4f8;color:#555}
+  #btnClear:active{background:#e0e8f0}
+  #btnSave{background:#1a3f5c;color:#fff}
+  #btnSave:active{background:#15344d}
+  #msg{
+    font-size:.9rem;text-align:center;min-height:1.4em;
+    color:#1a3f5c;line-height:1.5;
+  }
+  .logo{font-size:1.6rem;text-align:center}
+</style>
+</head>
+<body>
+<div class="card">
+  <div class="logo">🇺🇦</div>
+  <h2>Намалюйте підпис</h2>
+  <canvas id="canvas" width="680" height="320"></canvas>
+  <div class="row">
+    <button id="btnClear">Очистити</button>
+    <button id="btnSave">Зберегти ✓</button>
+  </div>
+  <p id="msg"></p>
+</div>
+<script>
+// ── Canvas setup ──────────────────────────────────────────────────────────────
+const canvas = document.getElementById('canvas');
+const ctx = canvas.getContext('2d');
+
+function resize() {
+  const rect = canvas.getBoundingClientRect();
+  // Keep logical size 2x for retina but CSS handles display size
+}
+
+ctx.strokeStyle = '#1a3f5c';
+ctx.lineWidth = 3;
+ctx.lineCap = 'round';
+ctx.lineJoin = 'round';
+ctx.fillStyle = '#fff';
+ctx.fillRect(0, 0, canvas.width, canvas.height);
+
+let drawing = false;
+
+function pt(e) {
+  const r = canvas.getBoundingClientRect();
+  const sx = canvas.width / r.width;
+  const sy = canvas.height / r.height;
+  const src = e.touches ? e.touches[0] : e;
+  return { x: (src.clientX - r.left) * sx, y: (src.clientY - r.top) * sy };
+}
+
+canvas.addEventListener('mousedown',  e => { drawing = true;  ctx.beginPath(); const p = pt(e); ctx.moveTo(p.x, p.y); });
+canvas.addEventListener('mousemove',  e => { if (!drawing) return; const p = pt(e); ctx.lineTo(p.x, p.y); ctx.stroke(); });
+canvas.addEventListener('mouseup',    () => drawing = false);
+canvas.addEventListener('mouseleave', () => drawing = false);
+canvas.addEventListener('touchstart', e => { e.preventDefault(); drawing = true; ctx.beginPath(); const p = pt(e); ctx.moveTo(p.x, p.y); }, { passive: false });
+canvas.addEventListener('touchmove',  e => { e.preventDefault(); if (!drawing) return; const p = pt(e); ctx.lineTo(p.x, p.y); ctx.stroke(); }, { passive: false });
+canvas.addEventListener('touchend',   () => drawing = false);
+
+document.getElementById('btnClear').onclick = () => {
+  ctx.fillStyle = '#fff';
+  ctx.fillRect(0, 0, canvas.width, canvas.height);
+};
+
+// ── Save ──────────────────────────────────────────────────────────────────────
+document.getElementById('btnSave').onclick = async () => {
+  const msg = document.getElementById('msg');
+  msg.textContent = '⏳ Зберігаємо...';
+
+  const img   = canvas.toDataURL('image/png');
+  const token = new URLSearchParams(location.search).get('t');
+
+  if (!token) {
+    msg.textContent = '❌ Немає токена підпису. Поверніться в Telegram.';
+    return;
+  }
+
+  // Worker URL is injected at build time or via meta tag; fallback to relative /api/sign
+  const workerBase = document.querySelector('meta[name="worker-url"]')?.content ?? '/api';
+  const endpoint   = `${workerBase}/sign?t=${token}`;
+
+  try {
+    const res = await fetch(endpoint, {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify({ img }),
+    });
+    if (res.ok) {
+      msg.textContent = '✅ Підпис збережено! Поверніться в Telegram і натисніть "✅ Підпис готовий".';
+      document.getElementById('btnSave').disabled = true;
+    } else {
+      msg.textContent = `❌ Помилка сервера (${res.status}). Спробуйте ще раз.`;
+    }
+  } catch {
+    msg.textContent = '❌ Немає з\'єднання. Перевірте інтернет.';
+  }
+};
+</script>
+</body>
+</html>
+
